@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funknotruf Hamburg</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Funknotruf Hamburg</h1>
+    <button id="start-btn">Mikrofon aktivieren</button>
+    <button id="stop-btn" disabled>Aufnahme stoppen</button>
+    <audio id="audio-playback" controls></audio>
+    <div id="message"></div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById('start-btn').addEventListener('click', async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                document.getElementById('audio-playback').src = audioUrl;
+                audioChunks = [];
+                sendAudioToUsers(audioBlob); // Audio an andere Benutzer senden
+            };
+
+            mediaRecorder.start();
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('stop-btn').disabled = false;
+            document.getElementById('message').textContent = "Aufnahme läuft...";
+        });
+
+        document.getElementById('stop-btn').addEventListener('click', () => {
+            mediaRecorder.stop();
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('stop-btn').disabled = true;
+            document.getElementById('message').textContent = "Aufnahme gestoppt.";
+        });
+
+        function sendAudioToUsers(audioBlob) {
+            // Hier kannst du die Logik implementieren, um die Audiodaten an andere Benutzer zu senden.
+            // Dies könnte über WebSockets, eine API oder eine andere Methode geschehen.
+            console.log("Audio an andere Benutzer gesendet:", audioBlob);
+            document.getElementById('message').textContent += " Audio wurde an andere Benutzer gesendet.";
+        }
+    </script>
+</body>
+</html>
